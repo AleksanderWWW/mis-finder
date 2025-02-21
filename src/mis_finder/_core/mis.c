@@ -18,31 +18,39 @@ static int** parse_numpy_matrix(PyArrayObject *matrix, int *n) {
 // Returns a greedy independent set
 static PyObject* max_independent_set(PyObject *self, PyObject *args) {
     PyArrayObject *matrix;
-    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &matrix)) return NULL;
+    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &matrix)) {
+        return NULL;
+    }
 
-    int n;
+    int n, i, j;
     int **adj = parse_numpy_matrix(matrix, &n);
-    bool *in_set = calloc(n, sizeof(bool));
+    bool *independent_set = calloc(n, sizeof(bool));
+
+    bool independent;
 
     // Greedy selection: pick nodes with the least neighbors first
-    for (int i = 0; i < n; i++) {
-        bool independent = true;
-        for (int j = 0; j < n; j++) {
-            if (adj[i][j] && in_set[j]) {
+    for (i = 0; i < n; i++) {
+        independent = true;
+        for (j = 0; j < n; j++) {
+            if (adj[i][j] && independent_set[j]) {
                 independent = false;
                 break;
             }
         }
-        if (independent) in_set[i] = true;
+        if (independent) {
+            independent_set[i] = true;
+        }
     }
 
     // Convert result to a Python list
     PyObject *result = PyList_New(0);
     for (int i = 0; i < n; i++) {
-        if (in_set[i]) PyList_Append(result, PyLong_FromLong(i));
+        if (independent_set[i]) {
+            PyList_Append(result, PyLong_FromLong(i));
+        }
     }
 
-    free(in_set);
+    free(independent_set);
     free(adj);
     return result;
 }

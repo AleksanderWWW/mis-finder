@@ -1,7 +1,7 @@
 [project]
 name = "mis_finder"
-version = "0.1.1"
-description = "Add your description here"
+version = "0.1.2"
+description = "Python package for finding Max Independent Set in a graph represented as numpy adjacency matrix"
 readme = "README.md"
 authors = [
     { name = "Aleksander Wojnarowicz", email = "alwojnarowicz@gmail.com" }
