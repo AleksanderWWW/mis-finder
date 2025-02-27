@@ -1,13 +1,20 @@
 [project]
 name = "mis_finder"
-version = "0.1.2"
+version = "0.2.0"
 description = "Python package for finding Max Independent Set in a graph represented as numpy adjacency matrix"
 readme = "README.md"
 authors = [
     { name = "Aleksander Wojnarowicz", email = "alwojnarowicz@gmail.com" }
 ]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "typing-extensions"
+]
+
+[project.optional-dependencies]
+dev = [
+    "numpy",
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
