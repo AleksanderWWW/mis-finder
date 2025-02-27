@@ -64,11 +64,22 @@ void simulated_annealing_mis(int **adj, int n, bool *global_best_set) {
             if (!is_valid(adj, independent_set, n, v)) {
                 independent_set[v] = prev_state; // Revert if invalid
             } else {
+                // EXTRA VALIDATION: Ensure entire set is still independent
+                for (int i = 0; i < n; i++) {
+                    if (independent_set[i]) {
+                        for (int j = 0; j < n; j++) {
+                            if (i != j && independent_set[j] && adj[i][j] == 1) {
+                                independent_set[v] = prev_state; // Revert if found conflict
+                                break;
+                            }
+                        }
+                    }
+                }
                 int new_size = independent_set_size(independent_set, n);
                 int size_diff = new_size - best_size;
 
                 // Accept better solutions or probabilistically accept worse ones
-                if (size_diff > 0 || exp(size_diff / T) > ((double)rand() / RAND_MAX)) {
+                if (size_diff > 0 || (exp(size_diff / T) > ((double)rand() / RAND_MAX) && is_valid(adj, independent_set, n, v))) {
                     if (new_size > best_size) {
                         best_size = new_size;
                         for (int i = 0; i < n; i++) best_set[i] = independent_set[i];

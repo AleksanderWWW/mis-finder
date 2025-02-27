@@ -13,19 +13,20 @@ except ImportError:
 
 
 extra_compile_args = ["-O2"]
-extra_link_args = ["-static"]
+extra_link_args = []
 options = {}
 
 if sys.platform == "darwin":  # macOS
     extra_compile_args.append("-Xpreprocessor")
     extra_link_args.append("-lomp")
-elif sys.platform == "win32":  # Windows (MinGW)
+else:
     extra_compile_args.append("-fopenmp")
     extra_link_args.append("-fopenmp")
 
-    if os.getenv("USE_MINGW_GCC", "true").lower()[0] in ("1", "t", "y"):
-        options["build_ext"] = {"compiler": "mingw32"}
-
+    if sys.platform == "win32":
+        extra_link_args.append("-static")
+        if os.getenv("USE_MINGW_GCC", "true").lower()[0] in ("1", "t", "y"):
+            options["build_ext"] = {"compiler": "mingw32"}
 
 setup(
     name="mis_finder",
