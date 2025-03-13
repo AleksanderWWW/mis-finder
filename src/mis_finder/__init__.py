@@ -41,6 +41,30 @@ def max_independent_set(
     initial_temperature: float = 1000.0,
     cooling_rate: float = 0.955,
 ) -> list[int]:
+    if not isinstance(iterations, int):
+        raise TypeError(f"Argument `iterations` should be int, got: {type(iterations)}")
+
+    if iterations <= 0:
+        raise ValueError(
+            f"Argument `iterations` should be a positive integer. Got {iterations}"
+        )
+
+    if not isinstance(initial_temperature, float):
+        raise TypeError(
+            f"Argument `initial_temperature` should be float, got: {type(initial_temperature)}"
+        )
+
+    if initial_temperature <= 0:
+        raise ValueError(f"Initial temperature should be positive. Got {initial_temperature}")
+
+    if not isinstance(cooling_rate, float):
+        raise TypeError(
+            f"Argument `cooling_rate` should be float, got: {type(cooling_rate)}"
+        )
+
+    if cooling_rate <= 0 or cooling_rate >= 1:
+        raise ValueError(f"Cooling rate should be between 0 and 1. Got {cooling_rate}")
+    
     return _max_independent_set(
         adj_matrix.tolist(), iterations, initial_temperature, cooling_rate
     )
