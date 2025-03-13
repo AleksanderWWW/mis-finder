@@ -34,8 +34,16 @@ def validate_shape(func: Callable[Param, RetType]) -> Callable[Param, RetType]:
 
 
 @validate_shape
-def max_independent_set(adj_matrix: "ArrayNxN") -> list[int]:
-    return _max_independent_set(adj_matrix)
+def max_independent_set(
+    adj_matrix: "ArrayNxN", 
+    *,
+    iterations: int = 10_000,
+    initial_temperature: float = 1000.0,
+    cooling_rate: float = 0.955,
+) -> list[int]:
+    return _max_independent_set(
+        adj_matrix.tolist(), iterations, initial_temperature, cooling_rate
+    )
 
 
 @validate_shape

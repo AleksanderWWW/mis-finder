@@ -1,38 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <math.h>
 #include <time.h>
 
-#define INIT_TEMP 1000.0   // Initial temperature
-#define COOLING_RATE 0.995 // Cooling rate per iteration
-#define ITERATIONS 1000  // Max iterations per thread
+#include "mis.h"
 
 
 struct cost_calc_result {
     int cost;
     bool is_valid;
 };
-
-
-static int** create_matrix(int n) {
-    int **matrix = malloc(n * sizeof(int*));
-    for (int i = 0; i < n; i++) {
-        matrix[i] = malloc(n * sizeof(int));
-    }
-
-    return matrix;
-}
-
-
-static void free_matrix(int **matrix, int n) {
-    for (int i = 0; i < n; i++) {
-        free(matrix[i]);
-        matrix[i] = NULL;
-    }
-    free(matrix);
-    matrix = NULL;
-}
 
 
 static int qubo(int** Q, bool* x, int n) {
@@ -48,7 +25,7 @@ static int qubo(int** Q, bool* x, int n) {
         }
         x_temp[i] = temp_res;
     }
-//    // Calculate res = x_temp x
+    // Calculate res = x_temp x
     for (int k = 0; k < n; k++) {
         res = res + x_temp[k] * x[k];
 
@@ -61,10 +38,10 @@ static int qubo(int** Q, bool* x, int n) {
 }
 
 
-static struct cost_calc_result cost_function(int** adj, int n, bool* independent_set) {
+static struct cost_calc_result cost_function(
+    int** adj, int n, bool* independent_set, int **Q
+) {
     struct cost_calc_result res;
-
-    int **Q = create_matrix(n);
 
     int i;
     i = 0;
@@ -85,24 +62,85 @@ static struct cost_calc_result cost_function(int** adj, int n, bool* independent
     }
     res.cost = qubo(Q, independent_set, n);
     res.is_valid = true;
-    free_matrix(Q, n);
     return res;
 }
 
 
-void simulated_annealing_mis(int** adj, int n, bool* independent_set) {
-    srand(time(NULL));
+static void accept_choice(int n, bool* candidate, bool* result) {
+    for (int i = 0; i < n; i++) {
+        result[i] = candidate[i];
+    }
+}
 
+static bool should_accept(double current_temp, int cost_current, int cost_candidate) {
+    int delta_e = cost_candidate - cost_current;
+
+    if (delta_e < 0) return true;
+
+    double acceptance_prob = exp(-((double)delta_e / current_temp));
+
+    return ((double)rand() / RAND_MAX) < acceptance_prob;
+}
+
+static bool is_independent(int n, int** adj, bool *chosen_set) {
+    for (int i = 0; i < n; i++) {
+        if (chosen_set[i] != 1) continue;
+
+        for (int j = 0; j < n; j++) {
+            if (chosen_set[j] != 1) continue;
+
+            if (adj[i][j] != 0) return false;
+        }
+    }
+    return true;
+}
+
+
+static void make_choice(int n, bool* buffer, int** adj) {
     int choice;
-    struct cost_calc_result cost_res;
 
-    // initial random guess
     for (int i = 0; i < n; i++) {
         choice = rand() & 1;
-        independent_set[i] = choice;
+        buffer[i] = choice;
+        }
+
+}
+
+
+void simulated_annealing_mis(
+    int** adj, int n, bool* independent_set, int its, double init_t, double c_rate
+) {
+    srand(time(NULL));
+
+    int **Q = create_matrix(n);
+
+    double current_temp = init_t;
+
+    struct cost_calc_result cost_res_current, cost_res_candidate;
+
+    bool *candidate = calloc(n, sizeof(bool));
+
+    // initial random guess
+    make_choice(n, independent_set, adj);
+
+    cost_res_current = cost_function(adj, n, independent_set, Q);
+
+    for (int i = 0; i < its; i++) {
+        make_choice(n, candidate, adj);
+        if (!is_independent(n, adj, candidate)) {
+            continue;
+        }
+
+        cost_res_candidate = cost_function(adj, n, candidate, Q);
+
+        if (should_accept(current_temp, cost_res_current.cost, cost_res_candidate.cost)) {
+            accept_choice(n, candidate, independent_set);
+            cost_res_current.cost = cost_res_candidate.cost;
+        }
+
+        current_temp = current_temp * c_rate;
     }
-
-    cost_res = cost_function(adj, n, independent_set);
-
-    printf("%d\n", cost_res.cost);
+    free(candidate);
+    free_matrix(Q, n);
+    candidate = NULL;
 }
