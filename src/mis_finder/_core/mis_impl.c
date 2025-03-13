@@ -106,6 +106,17 @@ static void make_choice(int n, bool* buffer, int** adj) {
 
 }
 
+static void handle_empty_final_result(int n, bool* result) {
+    for (int i = 0; i < n; i++) {
+        if (result[i] == 1) {  // Result is not empty
+            return;
+        }
+    }
+    // All entries are 0 - choose one random index
+    int rand_idx = rand() % n;
+    result[rand_idx] = 1;
+}
+
 
 void simulated_annealing_mis(
     int** adj, int n, bool* independent_set, int its, double init_t, double c_rate
@@ -120,8 +131,9 @@ void simulated_annealing_mis(
 
     bool *candidate = calloc(n, sizeof(bool));
 
-    // initial random guess
-    make_choice(n, independent_set, adj);
+    // initial solution
+    int rand_idx = rand() % n;
+    candidate[rand_idx] = 1;
 
     cost_res_current = cost_function(adj, n, independent_set, Q);
 
@@ -140,6 +152,9 @@ void simulated_annealing_mis(
 
         current_temp = current_temp * c_rate;
     }
+
+    handle_empty_final_result(n, independent_set);
+
     free(candidate);
     free_matrix(Q, n);
     candidate = NULL;
