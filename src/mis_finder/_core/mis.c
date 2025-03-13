@@ -1,20 +1,21 @@
-#include <stdbool.h>
 #include <stdlib.h>
-
-#include <Python.h>
-#include <numpy/arrayobject.h>
 
 #include "mis.h"
 
 
 static PyObject* max_independent_set(PyObject *self, PyObject *args) {
-    PyArrayObject *matrix;
-    if (!PyArg_ParseTuple(args, "O!", &PyArray_Type, &matrix)) {
-        return NULL;
+    PyObject *py_list;
+    const int iterations;
+    const double init_temp;
+    const double cooling_rate;
+
+    if (!PyArg_ParseTuple(args, "Oidd", &py_list, &iterations, &init_temp, &cooling_rate)) {
+        return NULL;  // Python error is set automatically
     }
 
+
     int n;
-    int **adj = parse_numpy_matrix(matrix, &n);
+    int **adj = parse_python_list(py_list, &n);
 
     if (adj == NULL) {
         return PyErr_NoMemory();
@@ -23,7 +24,7 @@ static PyObject* max_independent_set(PyObject *self, PyObject *args) {
 
     bool *independent_set = calloc(n, sizeof(bool));
 
-    simulated_annealing_mis(adj, n, independent_set);
+    simulated_annealing_mis(adj, n, independent_set, iterations, init_temp, cooling_rate);
 
     // Convert result to a Python list
     PyObject *result = PyList_New(0);
@@ -34,7 +35,7 @@ static PyObject* max_independent_set(PyObject *self, PyObject *args) {
     }
 
     free(independent_set);
-    free(adj);
+    free_2d_array(adj, n);
     return result;
 }
 
@@ -48,6 +49,5 @@ static struct PyModuleDef mis_module = {
 };
 
 PyMODINIT_FUNC PyInit__mis_finder_core() {
-    import_array();  // Initialize NumPy C API
     return PyModule_Create(&mis_module);
 }
